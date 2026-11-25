@@ -20,3 +20,4 @@ reserve_ammo = 24
 max_reserve_ammo = 48
 reload_time = 2.4
 reload_per_shell = true
+muzzle_velocity = 410.0

@@ -47,6 +47,12 @@ enum WeaponClass {
 @export var weakspot_multiplier: float = 2.0
 ## 最大射程（米）。超出的射线不结算伤害。
 @export var max_range: float = 100.0
+## 弹丸初速（米/秒）。真实值：9x19mm 手枪 350~400，12 号霰弹 400~430。
+## 0 = 瞬时命中（纯 hitscan）。非 0 时弹丸按 v*dt 分段推进，命中延迟 = 距离/初速。
+## 为什么保留 0 这个选项：15 米内 380m/s 的飞行时间只有 39 毫秒（2~3 帧），
+## 玩家感知不到，纯 hitscan 反而省算力。要真实就把初速填上，代价是每次开火
+## 每颗弹丸都要按帧投射射线（霰弹枪 8 颗 × 约 15 帧 = 120 次射线）。
+@export var muzzle_velocity: float = 0.0
 ## 后坐力强度（度），玩家控制器拿来做镜头抬枪
 @export var recoil: float = 1.0
 ## 点射发数（仅 BURST 模式生效）
@@ -102,4 +108,10 @@ func validate() -> PackedStringArray:
 		issues.append("max_range 必须 > 0")
 	if burst_count <= 0 and fire_mode == FireMode.BURST:
 		issues.append("BURST 模式下 burst_count 必须 > 0")
+	if muzzle_velocity < 0.0:
+		issues.append("muzzle_velocity 不能为负（0 = 瞬时命中）")
+	# 初速过低会让弹丸在空中滞留到肉眼可见（比如 5 m/s 打 40 米要 8 秒），
+	# 那不是"真实"而是"故障"。真实枪械最低也在 200 m/s 以上。
+	if muzzle_velocity > 0.0 and muzzle_velocity < 100.0:
+		issues.append("muzzle_velocity 过低（%.0f m/s），真实枪械应 ≥ 200" % muzzle_velocity)
 	return issues

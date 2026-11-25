@@ -13,3 +13,4 @@ damage = 22.0
 max_range = 90.0
 recoil = 1.2
 reload_time = 1.35
+muzzle_velocity = 380.0

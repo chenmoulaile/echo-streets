@@ -42,7 +42,10 @@ func equip(slot: int, force: bool = false) -> void:
 		prev.cancel_reload(Weapon.ReloadCancelReason.SWITCH)
 		prev.release_trigger()
 		prev.visible = false
-		prev.set_process(false)
+		# 这里刻意不调 set_process(false)：Weapon._process 除了连发节奏，还负责
+		# 推进在飞的弹丸（muzzle_velocity > 0 时）。停掉 process 会让切枪瞬间
+		# 还在飞的子弹冻在半空，换回来才继续 —— 表现为"子弹悬停"。
+		# 收枪后 _trigger_held 已清、换弹已取消，多跑一个空 _process 的代价可忽略。
 	index = clamped
 	var cur: Weapon = weapons[index]
 	cur.visible = true

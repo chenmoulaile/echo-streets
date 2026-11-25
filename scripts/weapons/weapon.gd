@@ -51,6 +51,10 @@ var _trigger_held: bool = false
 var _ads_on: bool = false
 var _ads_spread: float = 1.0
 var _ads_recoil: float = 1.0
+## 在飞的弹丸（仅 muzzle_velocity > 0 时非空）。
+## 为什么放在 Weapon 而不是全局管理器：弹丸的射程/伤害/排除体全部来自本武器，
+## 换枪时正在飞的子弹也不该被别的枪接管 —— 生命周期跟着开火者走最短。
+var _projectiles: Array[WeaponProjectile] = []
 
 func _ready() -> void:
 	if data == null:
@@ -74,6 +78,7 @@ func _process(delta: float) -> void:
 		_cooldown = maxf(_cooldown - delta, 0.0)
 	if _is_reloading:
 		_tick_reload(delta)
+	_tick_projectiles(delta)
 	# 全自动：按住即连发；点射：按 burst 节奏续发
 	if _trigger_held:
 		if data.fire_mode == WeaponData.FireMode.FULL_AUTO:
@@ -84,6 +89,16 @@ func _process(delta: float) -> void:
 				_fire_one_round()
 				_burst_left -= 1
 				_burst_timer = data.shot_interval()
+
+## 推进在飞的弹丸。倒序遍历 —— advance 返回 true 时要原地移除，
+## 正序遍历会在 remove_at 后跳过一个元素。
+func _tick_projectiles(delta: float) -> void:
+	if _projectiles.is_empty():
+		return
+	var world: World3D = get_world_3d()
+	for i: int in range(_projectiles.size() - 1, -1, -1):
+		if _projectiles[i].advance(world, delta):
+			_projectiles.remove_at(i)
 
 # ── 输入入口（由 Player 转发）────────────────────────────────────
 
@@ -206,6 +221,18 @@ func _fire_pellet(origin: Vector3, basis: Basis) -> void:
 	# 单发解算（散布采样 + 射线 + 命中归类）委托给 weapon_ballistics.gd。
 	# 拆分动机：PDF 硬红线单文件 ≤ 300 行，本文件补齐散布/弱点/金属判定后到 327 行。
 	# 本层只留"状态机"（弹药/冷却/换弹/连发节奏），解算层是纯函数无状态。
+	#
+	# 两条路径（用户 m09845 要求「子弹初速真实」）：
+	#   muzzle_velocity <= 0 → 瞬时命中，一发一条满射程射线，零额外分配。
+	#   muzzle_velocity > 0  → 生成一颗在飞弹丸，逐帧按 v*dt 推进，
+	#                          命中延迟 = 实际飞行距离 / 初速。
+	# 为什么不是「永远走弹道」：15 米内 380m/s 只差 39ms（2~3 帧），
+	# 感知不到；而霰弹枪 8 颗弹丸每帧一条射线 × 15 帧 = 120 次查询，
+	# 纯浪费算力。所以初速是每把枪的开关，不是全局强制。
+	if data.muzzle_velocity > 0.0:
+		_projectiles.append(WeaponProjectile.spawn(
+			data, origin, -basis.z, _shooter, _exclude_rids(), _ads_spread))
+		return
 	Ballistics.fire_pellet(get_world_3d(), data, origin, basis, _exclude_rids(), _shooter,
 		_ads_spread)
 
