@@ -21,10 +21,16 @@ extends ZombieBase
 @export var attack_damage: float = 12.0
 @export var attack_range: float = 1.6
 @export var attack_interval: float = 1.2
-## 进入攻击距离前的提前量，避免贴脸才抬手
+## 进入攻击距离后的抬手前摇：这段窗口里播 grab（双手合拢钳住），
+## 前摇结束才真正结算伤害。原来这个字段只声明不消费，攻击是「零帧起手」——
+## 玩家看不到任何预备动作，读成「贴脸就掉血」。
 @export var attack_windup: float = 0.25
 @export var stagger_time: float = 0.25
 @export var gravity_scale: float = 1.0
+## 追击时水平速度超过这个值就切 run（摆幅更大的跑动帧），否则走 walk。
+## 按各变体的 move_speed 落位：charger 4.1 / screamer 2.9 / fodder 2.4 会跑，
+## bomber 1.8 只会走 —— 胖子跑不动，这本身就是可读的性格差异。
+@export var run_speed_threshold: float = 2.0
 
 @export_group("感知")
 ## 失去目标视线多久后放弃追击（秒）
@@ -41,6 +47,8 @@ extends ZombieBase
 
 var _target: Node3D
 var _attack_cooldown: float = 0.0
+## 抬手前摇剩余时间。>0 表示正在抬手（播 grab），到 0 才结算伤害。
+var _windup_left: float = 0.0
 var _lose_timer: float = 0.0
 var _last_hit_was_weakspot: bool = false
 ## 死亡动画剩余展示时间。倒计时结束才回池，否则尸体瞬间消失、death 帧根本播不到。
@@ -94,8 +102,11 @@ func _process(delta: float) -> void:
 	if _death_left <= 0.0:
 		_return_to_pool()
 
-## 把 AI 状态映射到精灵帧动画。ATTACK 是非循环的 3 帧，播完后重放，
-## 否则两次攻击之间会僵在最后一帧的伸爪姿势上。
+## 把 AI 状态映射到精灵帧动画。ATTACK 分两段：
+##   抬手期（_windup_left > 0）播 grab —— 4 帧里第 2 帧就是双手合拢钳住的姿态，
+##   attack_windup 0.25s 恰好走到那一帧，然后才结算伤害，玩家有反应窗口；
+##   结算后播 attack（张爪挥空），避免两次攻击之间僵在伸爪姿势上。
+## attack 是非循环 3 帧，播完重放。
 func _sync_anim() -> void:
 	if _sprite == null or not _sprite.has_method(&"play"):
 		return
@@ -103,14 +114,25 @@ func _sync_anim() -> void:
 		State.IDLE:
 			_sprite.call(&"play", &"idle")
 		State.CHASE:
-			_sprite.call(&"play", &"walk")
+			_sprite.call(&"play", &"run" if _is_sprinting() else &"walk")
 		State.ATTACK:
-			if bool(_sprite.call(&"is_anim_done")):
+			if _windup_left > 0.0:
+				_sprite.call(&"play", &"grab")
+			elif bool(_sprite.call(&"is_anim_done")):
 				_sprite.call(&"play", &"attack", true)
 			else:
 				_sprite.call(&"play", &"attack")
 		State.STAGGER:
 			_sprite.call(&"play", &"hurt")
+
+## 追击中是否用跑动帧。判据是「实际水平速度」而不是 move_speed 配置 ——
+## 刚起步、被击退、绕障时速度都远低于 move_speed，那时播跑步帧会像在冰上滑行。
+## 阈值用绝对速度 run_speed_threshold（默认 2.0）而非 move_speed 的比例：
+## charger 4.1 / screamer 2.9 / fodder 2.4 过线会跑，bomber 1.8 永远只走 ——
+## 胖子跑不动，这个差异本身就是可读的性格。
+func _is_sprinting() -> bool:
+	var flat := Vector2(velocity.x, velocity.z).length()
+	return flat > run_speed_threshold
 
 # ── 状态推进 ────────────────────────────────────────────────────
 
@@ -153,9 +175,23 @@ func _tick_attack(delta: float) -> void:
 	if flat.length() > attack_range * 1.35:
 		_enter_state(State.CHASE)
 		return
-	if _attack_cooldown <= 0.0:
+	# 抬手期：先把 grab 帧摆出来，归零那一刻才真正结算伤害。
+	# 玩家看到的因果顺序必须是「手合拢 → 掉血」，反过来就是隔空咬人。
+	if _windup_left > 0.0:
+		_windup_left = maxf(_windup_left - delta, 0.0)
+		if _windup_left <= 0.0:
+			_attack_cooldown = attack_interval
+			_strike()
+		return
+	if _attack_cooldown > 0.0:
+		return
+	# attack_windup 被配成 0 时不能进抬手分支 —— 否则 _windup_left 恒为 0，
+	# 下一帧又判冷却已好，永远在「设 0 就返回」里打转，一下都打不出来。
+	if attack_windup <= 0.0:
 		_attack_cooldown = attack_interval
 		_strike()
+		return
+	_windup_left = attack_windup
 
 func _tick_stagger(delta: float) -> void:
 	# 被推挤时击退位移优先 —— 否则 _decelerate 会立刻吃掉击退速度，推了等于没推
@@ -165,6 +201,10 @@ func _tick_stagger(delta: float) -> void:
 func _enter_state(next: State) -> void:
 	if _state == next:
 		return
+	# 离开 ATTACK 必须清掉抬手计时：抬手途中玩家跑出范围或被打断（STAGGER）时，
+	# 残留的 _windup_left 会让下一次进入 ATTACK 立刻结算，变成"零帧出爪"。
+	if _state == State.ATTACK:
+		_windup_left = 0.0
 	_state = next
 
 func _tick_timers(delta: float) -> void:
@@ -290,6 +330,9 @@ func _on_died(source: Node) -> void:
 func _reset_spawn_state() -> void:
 	_target = null
 	_attack_cooldown = attack_interval * 0.5
+	# 必须复位：上一轮死亡可能停在抬手期（_windup_left > 0），
+	# 不复位则新刷出的丧尸第一帧就带着别人的前摇，还没贴近就先掉一次伤害。
+	_windup_left = 0.0
 	_stagger_left = 0.0
 	_lose_timer = 0.0
 	_last_hit_was_weakspot = false

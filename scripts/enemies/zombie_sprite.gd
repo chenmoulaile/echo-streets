@@ -17,10 +17,19 @@ const FLASH_DECAY := 7.0
 const FRAME_DIR := "res://assets/sprites/zombie_frames/"
 
 ## 状态 -> [帧数, 帧率, 是否循环]
+## run / grab 由 tmp/ZombieFrames2.py 生成（旧 5 态由同一脚本 verify 模式逐像素复现
+## tmp/ZombieAnim.cs 的产物，证明移植没走样）。
+##   run  6 帧 @12fps：与 walk 共用两相步态，但摆幅 14px（walk 是 6px）、抬腿 9px、
+##        躯干前倾 2px。走路 ±6px 在 128px 画布上只动脚踝，看不出在跑。
+##   grab 4 帧 @9fps 非循环：抬手 → 前扑 → 双手在胸前合拢钳住 → 往回拽。
+##        与 attack 的区别是「合拢」：attack 张爪抓空，grab 双手越过躯干中线交叠 ——
+##        正面视角下「抓住」唯一读得出的形态就是两只手合到身前。
 const ANIMS := {
 	&"idle": [4, 4.0, true],
 	&"walk": [6, 9.0, true],
+	&"run": [6, 12.0, true],
 	&"attack": [3, 9.0, false],
+	&"grab": [4, 9.0, false],
 	&"hurt": [2, 9.0, false],
 	&"death": [5, 6.0, false],
 }

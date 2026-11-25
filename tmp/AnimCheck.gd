@@ -28,7 +28,9 @@ func _ready() -> void:
 
 	await _capture_state(&"idle", 4, 0.26)
 	await _capture_state(&"walk", 6, 0.12)
+	await _capture_state(&"run", 6, 0.10)
 	await _capture_state(&"attack", 3, 0.12)
+	await _capture_state(&"grab", 4, 0.12)
 	await _capture_state(&"hurt", 2, 0.12)
 	await _capture_state(&"death", 5, 0.18)
 

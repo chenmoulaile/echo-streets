@@ -1,38 +1,50 @@
-## 像素 HUD 总装层：状态文字（章节横幅 / 波次 / 击杀 / 压力 / 死亡提示）+ EventBus 接线，
-## 具体读数部件（血条 / 弹药 / 准星 / 枪械贴图 / 枪口火光 / 换弹条 / 命中标记）
-## 委托给 scripts/ui/hud_widgets.gd。
+## 像素 HUD 总装层：状态文字（章节 / 波次 / 击杀 / 威胁 / 死亡提示）+ EventBus 接线，
+## 具体读数部件（血量 / 弹药 / 准星 / 命中反馈 / 枪械贴图 / 枪口火光）委托给
+## scripts/ui/hud_widgets.gd，准星与命中反馈再各自拆一个文件。
 ## class_name: Hud
 ## 挂载节点类型: CanvasLayer（放在 main.tscn 的 UI 层，独立于 3D 世界）
 ## 依赖信号: EventBus.player_health_changed / ammo_changed / reload_started /
 ##           reload_cancelled / reload_finished / weapon_switched / player_fired /
-##           player_hit / zombie_hit / kill_count_changed / wave_started /
-##           zombie_count_changed / director_pressure_changed / game_state_changed /
-##           chapter_started / ads_changed / tutorial_step
+##           player_dry_fire / player_hit / zombie_hit / kill_count_changed /
+##           wave_started / zombie_count_changed / director_pressure_changed /
+##           game_state_changed / chapter_started / ads_changed / tutorial_step
 ## 节点路径假设: 无。所有子节点在 _build_ui() 里用代码创建 —— 手写大型 .tscn 的
 ##               格式风险高于收益，且 HUD 需要按 480x270 逻辑分辨率精确摆放。
-## 拆成两个文件的原因: 读数部件与事件接线混在一个文件里改一处准星要通读全文。
+##
+## 排版口径（用户 m11566：高级、简洁）：
+##   四角分区，互不重叠 —— 左上=进度块，上中=威胁，右上=弹药，左下=血量。
+##   每块内部只允许一条主线（字号最大的那行）+ 一条辅助线，不叠第二层框。
+##   所有分块靠**留白**分离，不画分隔框 —— 480x270 上加框就是在画面里凿洞。
 class_name Hud
 extends CanvasLayer
 
 const LOGICAL_SIZE := Vector2(480.0, 270.0)
-## 章节横幅停留时长。低于 1.5 秒读不完 "NEO-TOKYO · CORPORATE ATRIUM" 这种副标题，
-## 高于 4 秒会压住第一波的视野。
+## 章节横幅停留时长。低于 1.5 秒读不完副标题，高于 4 秒会压住第一波的视野。
 const BANNER_TIME := 3.2
 ## 教程提示的淡出时长（秒）。教程是"读一眼就走"的信息，不是常驻 HUD。
 const TUTORIAL_FADE := 0.45
 
+const COL_TEXT := Color(0.92, 0.93, 0.89, 1.0)
+const COL_DIM := Color(0.56, 0.58, 0.54, 1.0)
+const COL_ACCENT := Color(0.93, 0.72, 0.30, 1.0)
+const COL_DANGER := Color(0.91, 0.30, 0.22, 1.0)
+
 var _root: Control
 var _widgets: HudWidgets
 var _state_text: Label
+var _chapter_tag: Label
 var _wave_text: Label
 var _kill_text: Label
-var _pressure_text: Label
+var _threat_text: Label
 var _chapter_title: Label
 var _chapter_sub: Label
 var _tutorial_text: Label
+var _accent_rule: ColorRect
 var _banner_left: float = 0.0
 var _tutorial_left: float = 0.0
 var _chapter_no: int = 1
+var _pressure_word: String = "CALM"
+var _alive: int = 0
 
 func _ready() -> void:
 	layer = 2
@@ -79,33 +91,49 @@ func _build_ui() -> void:
 	_build_status_text()
 
 func _build_status_text() -> void:
-	_wave_text = _label(Vector2(12, 8), "WAVE 1", 11, Color(0.78, 0.80, 0.74, 1.0))
+	# 左上进度块：左侧 2x22 的琥珀色细杆把三行文字捆成一组，
+	# 比给文字加框省空间，也比纯文字更容易在杂乱场景里被认出来。
+	_accent_rule = ColorRect.new()
+	_accent_rule.position = Vector2(12.0, 9.0)
+	_accent_rule.size = Vector2(2.0, 26.0)
+	_accent_rule.color = COL_ACCENT
+	_accent_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_accent_rule)
+
+	_chapter_tag = _label(Vector2(20.0, 6.0), "CH 01", 9, COL_ACCENT)
+	_root.add_child(_chapter_tag)
+	_wave_text = _label(Vector2(20.0, 17.0), "WAVE 1", 12, COL_TEXT)
 	_root.add_child(_wave_text)
-	_kill_text = _label(Vector2(12, 22), "KILLS 0", 11, Color(0.66, 0.68, 0.62, 1.0))
+	_kill_text = _label(Vector2(20.0, 31.0), "KILLS 0", 9, COL_DIM)
 	_root.add_child(_kill_text)
-	_pressure_text = _label(Vector2(380, 8), "CALM", 11, Color(0.60, 0.62, 0.58, 1.0))
-	_pressure_text.size = Vector2(88, 16)
-	_pressure_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_root.add_child(_pressure_text)
-	# 死亡 / 暂停提示压在画面中线偏上，避开准星与换弹条
-	_state_text = _label(Vector2(0, 118), "", 20, Color(0.94, 0.86, 0.66, 1.0))
-	_state_text.size = Vector2(LOGICAL_SIZE.x, 28)
+
+	# 上中威胁读数：压在章节横幅之上 8px，横幅出现时两者不重叠
+	_threat_text = _label(Vector2(0.0, 6.0), "CALM", 9, COL_DIM)
+	_threat_text.size = Vector2(LOGICAL_SIZE.x, 12.0)
+	_threat_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_root.add_child(_threat_text)
+
+	# 死亡 / 暂停提示压在画面中线偏上，避开准星
+	_state_text = _label(Vector2(0, 112), "", 18, COL_TEXT)
+	_state_text.size = Vector2(LOGICAL_SIZE.x, 26)
 	_state_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_root.add_child(_state_text)
-	# 章节横幅：开场 3.2 秒内压在上方 1/4，与左上角的 WAVE/KILLS 错开纵向
-	_chapter_title = _label(Vector2(0, 46), "", 16, Color(0.96, 0.94, 0.88, 1.0))
-	_chapter_title.size = Vector2(LOGICAL_SIZE.x, 20)
+
+	# 章节横幅：标题 + 目标，只在开场 3.2 秒存在
+	_chapter_title = _label(Vector2(0, 44), "", 15, COL_TEXT)
+	_chapter_title.size = Vector2(LOGICAL_SIZE.x, 19)
 	_chapter_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_chapter_title.modulate.a = 0.0
 	_root.add_child(_chapter_title)
-	_chapter_sub = _label(Vector2(0, 64), "", 10, Color(0.80, 0.82, 0.78, 1.0))
-	_chapter_sub.size = Vector2(LOGICAL_SIZE.x, 14)
+	_chapter_sub = _label(Vector2(0, 62), "", 9, COL_DIM)
+	_chapter_sub.size = Vector2(LOGICAL_SIZE.x, 13)
 	_chapter_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_chapter_sub.modulate.a = 0.0
 	_root.add_child(_chapter_sub)
+
 	# 教程提示压在血条上方：左下角是玩家视线余光区，不挡视野也不和准星抢位置
-	_tutorial_text = _label(Vector2(12, 214), "", 10, Color(0.88, 0.90, 0.84, 1.0))
-	_tutorial_text.size = Vector2(300, 14)
+	_tutorial_text = _label(Vector2(12.0, 222.0), "", 9, COL_TEXT)
+	_tutorial_text.size = Vector2(320.0, 13.0)
 	_tutorial_text.modulate.a = 0.0
 	_root.add_child(_tutorial_text)
 
@@ -116,9 +144,9 @@ func _label(pos: Vector2, text: String, font_size: int, color: Color) -> Label:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
-	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
-	l.add_theme_constant_override("shadow_offset_x", 1)
-	l.add_theme_constant_override("shadow_offset_y", 1)
+	# 1px 描边而不是偏移投影：投影会让每个字向右下长黑边，480x270 上读成"脏"
+	l.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.62))
+	l.add_theme_constant_override("outline_size", 2)
 	return l
 
 # ── 初始状态拉取 ────────────────────────────────────────────────
@@ -243,23 +271,34 @@ func _on_kill_count_changed(total_kills: int) -> void:
 
 func _on_wave_started(wave_index: int, _total_count: int) -> void:
 	if _wave_text != null:
-		_wave_text.text = "CHAPTER %d  -  WAVE %d" % [_chapter_no, wave_index + 1]
+		_wave_text.text = "WAVE %d" % (wave_index + 1)
 
 func _on_zombie_count_changed(alive: int) -> void:
-	if _pressure_text != null:
-		_pressure_text.text = "ALIVE %d" % alive
+	_alive = alive
+	_refresh_threat()
 
 func _on_pressure_changed(pressure: float) -> void:
-	if _pressure_text == null:
-		return
-	var label_text: String = "CALM"
+	_pressure_word = "CALM"
 	if pressure >= 0.85:
-		label_text = "CRITICAL"
+		_pressure_word = "CRITICAL"
 	elif pressure >= 0.6:
-		label_text = "HIGH"
+		_pressure_word = "HIGH"
 	elif pressure >= 0.3:
-		label_text = "ALERT"
-	_pressure_text.text = label_text
+		_pressure_word = "ALERT"
+	_refresh_threat()
+
+## 威胁读数 = 压力词 + 存活数，一行两段。合并成一行而不是两个标签：
+## 它们永远同时变化，拆成两行会让上中区变成一块方阵。
+func _refresh_threat() -> void:
+	if _threat_text == null:
+		return
+	_threat_text.text = "%s   %d" % [_pressure_word, _alive]
+	var col: Color = COL_DIM
+	if _pressure_word == "CRITICAL" or _pressure_word == "HIGH":
+		col = COL_DANGER
+	elif _pressure_word == "ALERT":
+		col = COL_ACCENT
+	_threat_text.add_theme_color_override("font_color", col)
 
 func _on_game_state_changed(new_state: int) -> void:
 	if _state_text == null:
@@ -268,23 +307,26 @@ func _on_game_state_changed(new_state: int) -> void:
 		GameManager.GameState.PLAYING:
 			_state_text.text = ""
 		GameManager.GameState.PAUSED:
-			_state_text.text = "PAUSED  -  ESC TO RESUME"
+			_state_text.text = "PAUSED"
 		GameManager.GameState.DEAD:
-			_state_text.text = "YOU DIED  -  PRESS R TO RETRY"
+			_state_text.text = "YOU DIED   -   R TO RETRY"
 		GameManager.GameState.LEVEL_COMPLETE:
 			# 只有打完最后一章才会进这个状态（中间章由 GameManager 直接换章）
-			_state_text.text = "DEMO CLEARED  -  PRESS R TO RESTART"
+			_state_text.text = "DEMO CLEARED   -   R TO RESTART"
 		_:
 			_state_text.text = ""
 
-## 章节开场横幅。objective 单独一行压在标题下方，玩家一眼知道本章要干什么。
+## 章节开场横幅 + 左上常驻章节号。横幅负责"宣布"，常驻块负责"定位"，
+## 所以横幅放标题与目标，常驻块只放编号 —— 同一句话不出现两次。
 func _on_chapter_started(index: int, total: int, title: String, objective: String) -> void:
 	_chapter_no = index + 1
+	if _chapter_tag != null:
+		_chapter_tag.text = "CH %02d / %02d" % [index + 1, total]
 	if _chapter_title != null:
-		_chapter_title.text = "%d / %d   %s" % [index + 1, total, title]
+		_chapter_title.text = title
 	if _chapter_sub != null:
 		_chapter_sub.text = objective
 	_banner_left = BANNER_TIME
 	if _wave_text != null:
 		# 换章后波次序号从 1 重新开始，这里同步复位，避免沿用上一章的 WAVE 5
-		_wave_text.text = "CHAPTER %d  -  WAVE 1" % (index + 1)
+		_wave_text.text = "WAVE 1"

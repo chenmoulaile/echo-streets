@@ -1,19 +1,15 @@
-﻿from PIL import Image
-d = r"D:\mygame\tmp\shots\chapter\\"
-def L(p): return (0.299*p[0]+0.587*p[1]+0.114*p[2])/255.0
-
-print("=== ch03_01 逐行 (x=240) y=100..150 : 二层结构应在 y=113..131 ===")
-im = Image.open(d+"ch03_01_center.png").convert("RGB"); px=im.load()
-for y in range(100,152,2):
-    r,g,b=px[240,y]; print("  y=%3d rgb=(%3d,%3d,%3d) L=%.3f"%(y,r,g,b,L((r,g,b))))
-
-print()
-print("=== ch03_05 逐行 (x=240) y=60..230 : 南侧环廊顶面应在 y=103..178 ===")
-im5 = Image.open(d+"ch03_05_top.png").convert("RGB"); p5=im5.load()
-for y in range(60,232,6):
-    r,g,b=p5[240,y]; print("  y=%3d rgb=(%3d,%3d,%3d) L=%.3f"%(y,r,g,b,L((r,g,b))))
-
-print()
-print("=== ch03_05 横向 (y=140) 看左右是否出现楼板 ===")
-for x in range(0,480,20):
-    r,g,b=p5[x,140]; print("  x=%3d rgb=(%3d,%3d,%3d) L=%.3f"%(x,r,g,b,L((r,g,b))))
+﻿import numpy as np
+from PIL import Image
+b = r"D:\mygame\tmp\shots"
+print("frame        darkpx  bbox(x0,x1,y0,y1)   topmost_row_x_span")
+for n in ["01_idle.png","02_fire.png","03_reload.png","04_dead.png"]:
+    a = np.asarray(Image.open(b+"\\"+n).convert("RGB")).astype(np.int32)
+    r,g,bch = a[:,:,0],a[:,:,1],a[:,:,2]
+    lum = 0.299*r+0.587*g+0.114*bch
+    mx=np.maximum(np.maximum(r,g),bch); mn=np.minimum(np.minimum(r,g),bch)
+    sat=np.where(mx>0,(mx-mn)*255.0/np.maximum(mx,1),0)
+    m = (lum<70)&(sat<45)
+    m[:100,:]=False; m[:,:200]=False
+    ys,xs=np.nonzero(m)
+    y0=ys.min(); row=np.nonzero(m[y0])[0]
+    print("%-12s %5d  (%3d,%3d,%3d,%3d)   y=%d x[%d,%d]" % (n,m.sum(),xs.min(),xs.max(),ys.min(),ys.max(),y0,row.min(),row.max()))
