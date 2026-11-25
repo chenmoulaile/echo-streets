@@ -1,0 +1,58 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/zombie.gd" id="1_rf117"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_mulat"]
+[ext_resource type="Shader" path="res://shaders/zombie_hit_flash.gdshader" id="3_yg324"]
+[ext_resource type="Texture2D" path="res://assets/sprites/zombie_frames/zombie_fodder_idle_0.png" id="4_bvgra"]
+[ext_resource type="Script" path="res://scripts/enemies/zombie_sprite.gd" id="5_v7pay"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_y2f4s"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ovhic"]
+render_priority = 0
+shader = ExtResource("3_yg324")
+shader_parameter/albedo_texture = ExtResource("4_bvgra")
+shader_parameter/sprite_size = Vector2(128, 96)
+shader_parameter/flip_h = null
+shader_parameter/flash_amount = null
+shader_parameter/flash_color = null
+shader_parameter/tint_color = null
+shader_parameter/tint_amount = null
+shader_parameter/overexposure = null
+shader_parameter/rim_boost = null
+shader_parameter/flash_power = null
+shader_parameter/alpha_cutoff = null
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1oacb"]
+radius = 0.18
+
+[node name="Zombie" type="CharacterBody3D" unique_id=1955487096]
+script = ExtResource("1_rf117")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=527444124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_y2f4s")
+
+[node name="HealthComponent" type="Node" parent="." unique_id=363784031]
+script = ExtResource("2_mulat")
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=1044917282]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = SubResource("ShaderMaterial_ovhic")
+pixel_size = 0.01875
+billboard = 1
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("4_bvgra")
+script = ExtResource("5_v7pay")
+
+[node name="Weakspot" type="Area3D" parent="." unique_id=1864924241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.58, 0)
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+
+[node name="@CollisionShape3D@2" type="CollisionShape3D" parent="Weakspot" unique_id=1641610242]
+shape = SubResource("SphereShape3D_1oacb")

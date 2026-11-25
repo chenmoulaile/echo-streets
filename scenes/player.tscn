@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_qlg0r"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_tuyoq"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon.gd" id="3_fjrip"]
+[ext_resource type="Resource" path="res://data/weapon_pistol.tres" id="4_smehm"]
+[ext_resource type="Resource" path="res://data/weapon_shotgun.tres" id="5_ur7pv"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_y4r1p"]
+radius = 0.4
+height = 1.8
+
+[node name="Player" type="CharacterBody3D" unique_id=1178047989]
+script = ExtResource("1_qlg0r")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=286494511]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_y4r1p")
+
+[node name="HealthComponent" type="Node" parent="." unique_id=933302140]
+script = ExtResource("2_tuyoq")
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=599958498]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1654198884]
+current = true
+
+[node name="WeaponMount" type="Node3D" parent="CameraRig/Camera3D" unique_id=698259583]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.5)
+
+[node name="Pistol" type="Node3D" parent="CameraRig/Camera3D/WeaponMount" unique_id=1965072062]
+script = ExtResource("3_fjrip")
+data = ExtResource("4_smehm")
+shooter_path = NodePath("../../../..")
+
+[node name="Shotgun" type="Node3D" parent="CameraRig/Camera3D/WeaponMount" unique_id=1208641382]
+script = ExtResource("3_fjrip")
+data = ExtResource("5_ur7pv")
+shooter_path = NodePath("../../../..")

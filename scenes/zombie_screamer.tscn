@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/zombie.gd" id="1_vuyul"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_a56rs"]
+[ext_resource type="Shader" path="res://shaders/zombie_hit_flash.gdshader" id="3_3exmb"]
+[ext_resource type="Texture2D" path="res://assets/sprites/zombie_frames/zombie_screamer_idle_0.png" id="4_ob44x"]
+[ext_resource type="Script" path="res://scripts/enemies/zombie_sprite.gd" id="5_nm2tf"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ock3t"]
+radius = 0.4
+height = 1.7
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_drj6t"]
+render_priority = 0
+shader = ExtResource("3_3exmb")
+shader_parameter/albedo_texture = ExtResource("4_ob44x")
+shader_parameter/sprite_size = Vector2(128, 96)
+shader_parameter/flip_h = null
+shader_parameter/flash_amount = null
+shader_parameter/flash_color = null
+shader_parameter/tint_color = null
+shader_parameter/tint_amount = null
+shader_parameter/overexposure = null
+shader_parameter/rim_boost = null
+shader_parameter/flash_power = null
+shader_parameter/alpha_cutoff = null
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_8tr08"]
+radius = 0.18
+
+[node name="Zombie" type="CharacterBody3D" unique_id=54650968]
+script = ExtResource("1_vuyul")
+attack_damage = 8.0
+max_health = 60.0
+move_speed = 2.9
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=454258869]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_ock3t")
+
+[node name="HealthComponent" type="Node" parent="." unique_id=460306033]
+script = ExtResource("2_a56rs")
+max_health = 60.0
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=42061658]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("ShaderMaterial_drj6t")
+pixel_size = 0.017708333
+billboard = 1
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("4_ob44x")
+script = ExtResource("5_nm2tf")
+frame_prefix = "zombie_screamer"
+
+[node name="Weakspot" type="Area3D" parent="." unique_id=1658523283]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.48, 0)
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+
+[node name="@CollisionShape3D@5" type="CollisionShape3D" parent="Weakspot" unique_id=1980120268]
+shape = SubResource("SphereShape3D_8tr08")

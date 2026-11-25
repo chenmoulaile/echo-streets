@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/weapon_shotgun_hud.png" id="1_yfij4"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="2_8gcjp"]
+
+[resource]
+script = ExtResource("2_8gcjp")
+display_name = "SHOTGUN"
+shotgun_viewmodel = true
+hud_texture = ExtResource("1_yfij4")
+rounds_per_minute = 92.0
+pellets = 8
+spread_degrees = 6.5
+damage = 11.0
+weakspot_multiplier = 1.5
+max_range = 40.0
+recoil = 3.6
+magazine_size = 6
+reserve_ammo = 24
+max_reserve_ammo = 48
+reload_time = 2.4
+reload_per_shell = true

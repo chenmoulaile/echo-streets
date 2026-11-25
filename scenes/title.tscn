@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/title_screen.gd" id="1_title"]
+[ext_resource type="Script" path="res://scripts/ui/settings_panel.gd" id="2_setpn"]
+
+[node name="Title" type="CanvasLayer"]
+script = ExtResource("1_title")
+
+[node name="SettingsPanel" type="CanvasLayer" parent="."]
+script = ExtResource("2_setpn")

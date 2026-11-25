@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/weapon_pistol_hud.png" id="1_jkd8e"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="2_f1w7w"]
+
+[resource]
+script = ExtResource("2_f1w7w")
+display_name = "PISTOL"
+hud_texture = ExtResource("1_jkd8e")
+rounds_per_minute = 340.0
+spread_degrees = 0.9
+damage = 22.0
+max_range = 90.0
+recoil = 1.2
+reload_time = 1.35

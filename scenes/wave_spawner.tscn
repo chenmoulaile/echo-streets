@@ -1,0 +1,46 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/director/wave_spawner.gd" id="1_ab10t"]
+
+[node name="WaveSpawner" type="Node3D" unique_id=1072822297]
+script = ExtResource("1_ab10t")
+
+[node name="SpawnPoints" type="Node3D" parent="." unique_id=577160083]
+
+[node name="P01" type="Marker3D" parent="SpawnPoints" unique_id=1691901123]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -18)
+
+[node name="P02" type="Marker3D" parent="SpawnPoints" unique_id=791871181]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -18)
+
+[node name="P03" type="Marker3D" parent="SpawnPoints" unique_id=501715031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -8)
+
+[node name="P04" type="Marker3D" parent="SpawnPoints" unique_id=249527371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -8)
+
+[node name="P05" type="Marker3D" parent="SpawnPoints" unique_id=1699051989]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 2)
+
+[node name="P06" type="Marker3D" parent="SpawnPoints" unique_id=1975193384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 2)
+
+[node name="P07" type="Marker3D" parent="SpawnPoints" unique_id=1070501076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 12)
+
+[node name="P08" type="Marker3D" parent="SpawnPoints" unique_id=330386675]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 12)
+
+[node name="P09" type="Marker3D" parent="SpawnPoints" unique_id=853541532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 19)
+
+[node name="P10" type="Marker3D" parent="SpawnPoints" unique_id=1173319740]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 19)
+
+[node name="P11" type="Marker3D" parent="SpawnPoints" unique_id=1646222148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20)
+
+[node name="P12" type="Marker3D" parent="SpawnPoints" unique_id=1518076676]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+
+[node name="Pools" type="Node3D" parent="." unique_id=1321616789]

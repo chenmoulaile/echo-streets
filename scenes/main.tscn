@@ -1,0 +1,136 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/level/level.gd" id="1_trceg"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_a8y0u"]
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="3_jkv2x"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="4_jbj1t"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon.gd" id="5_muem4"]
+[ext_resource type="Resource" path="res://data/weapon_pistol.tres" id="6_dp3eg"]
+[ext_resource type="Resource" path="res://data/weapon_shotgun.tres" id="7_0ld40"]
+[ext_resource type="PackedScene" path="res://scenes/wave_spawner.tscn" id="8_gqmmt"]
+[ext_resource type="Script" path="res://scripts/director/wave_spawner.gd" id="9_yc10j"]
+[ext_resource type="PackedScene" path="res://scenes/director.tscn" id="10_jscy8"]
+[ext_resource type="Script" path="res://scripts/director/director.gd" id="11_pm3ni"]
+[ext_resource type="Shader" path="res://shaders/pixelzombie_postprocess.gdshader" id="12_y6deb"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="13_og1vs"]
+[ext_resource type="Script" path="res://scripts/ui/tutorial_flow.gd" id="14_tutfl"]
+[ext_resource type="Script" path="res://scripts/ui/settings_panel.gd" id="15_setpn"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_y4r1p"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2wyq8"]
+shader = ExtResource("12_y6deb")
+shader_parameter/pixel_size = 1.0
+shader_parameter/palette_levels = null
+shader_parameter/dither_strength = null
+shader_parameter/saturation = 1.0
+shader_parameter/contrast = 1.02
+shader_parameter/brightness = 1.16
+shader_parameter/lift = 0.035
+shader_parameter/enable_crt = null
+shader_parameter/curvature = null
+shader_parameter/chromatic_aberration = null
+shader_parameter/scanline_strength = 0.1
+shader_parameter/scanline_height = null
+shader_parameter/vignette_strength = 0.2
+
+[node name="Main" type="Node3D" unique_id=1401882422]
+script = ExtResource("1_trceg")
+
+[node name="World" type="Node3D" parent="." unique_id=1835868406]
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1178047989 instance=ExtResource("2_a8y0u")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 14)
+script = ExtResource("3_jkv2x")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=286494511]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_y4r1p")
+
+[node name="HealthComponent" type="Node" parent="Player" unique_id=933302140]
+script = ExtResource("4_jbj1t")
+
+[node name="CameraRig" type="Node3D" parent="Player" unique_id=599958498]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraRig" unique_id=1654198884]
+current = true
+
+[node name="WeaponMount" type="Node3D" parent="Player/CameraRig/Camera3D" unique_id=698259583]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.5)
+
+[node name="Pistol" type="Node3D" parent="Player/CameraRig/Camera3D/WeaponMount" unique_id=1965072062]
+script = ExtResource("5_muem4")
+data = ExtResource("6_dp3eg")
+shooter_path = NodePath("../../../..")
+
+[node name="Shotgun" type="Node3D" parent="Player/CameraRig/Camera3D/WeaponMount" unique_id=1208641382]
+script = ExtResource("5_muem4")
+data = ExtResource("7_0ld40")
+shooter_path = NodePath("../../../..")
+
+[node name="WaveSpawner" type="Node3D" parent="." unique_id=1072822297 instance=ExtResource("8_gqmmt")]
+script = ExtResource("9_yc10j")
+
+[node name="SpawnPoints" type="Node3D" parent="WaveSpawner" unique_id=577160083]
+
+[node name="P01" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1691901123]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -18)
+
+[node name="P02" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=791871181]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -18)
+
+[node name="P03" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=501715031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -8)
+
+[node name="P04" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=249527371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -8)
+
+[node name="P05" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1699051989]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 2)
+
+[node name="P06" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1975193384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 2)
+
+[node name="P07" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1070501076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 12)
+
+[node name="P08" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=330386675]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 12)
+
+[node name="P09" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=853541532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 19)
+
+[node name="P10" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1173319740]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 19)
+
+[node name="P11" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1646222148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -20)
+
+[node name="P12" type="Marker3D" parent="WaveSpawner/SpawnPoints" unique_id=1518076676]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+
+[node name="Pools" type="Node3D" parent="WaveSpawner" unique_id=1321616789]
+
+[node name="Director" type="Node" parent="." unique_id=800651139 instance=ExtResource("10_jscy8")]
+script = ExtResource("11_pm3ni")
+
+[node name="PostFX" type="CanvasLayer" parent="." unique_id=166808604]
+
+[node name="PixelPost" type="ColorRect" parent="PostFX" unique_id=1271582957]
+material = SubResource("ShaderMaterial_2wyq8")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Hud" type="CanvasLayer" parent="." unique_id=1320251832]
+script = ExtResource("13_og1vs")
+
+[node name="TutorialFlow" type="Node" parent="." unique_id=1102883741]
+script = ExtResource("14_tutfl")
+
+[node name="SettingsPanel" type="CanvasLayer" parent="." unique_id=1746620913]
+script = ExtResource("15_setpn")

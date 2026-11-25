@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bfacing2002"]
+
+[ext_resource type="Script" path="res://tmp/_facing2.gd" id="1_f2"]
+
+[node name="Facing2" type="Node3D"]
+script = ExtResource("1_f2")

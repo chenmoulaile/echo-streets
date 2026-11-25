@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/zombie.gd" id="1_oi2ws"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_kcjdi"]
+[ext_resource type="Shader" path="res://shaders/zombie_hit_flash.gdshader" id="3_5khsd"]
+[ext_resource type="Texture2D" path="res://assets/sprites/zombie_frames/zombie_charger_idle_0.png" id="4_vurl7"]
+[ext_resource type="Script" path="res://scripts/enemies/zombie_sprite.gd" id="5_u1s06"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kayab"]
+radius = 0.4
+height = 1.75
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_o3lij"]
+render_priority = 0
+shader = ExtResource("3_5khsd")
+shader_parameter/albedo_texture = ExtResource("4_vurl7")
+shader_parameter/sprite_size = Vector2(128, 96)
+shader_parameter/flip_h = null
+shader_parameter/flash_amount = null
+shader_parameter/flash_color = null
+shader_parameter/tint_color = null
+shader_parameter/tint_amount = null
+shader_parameter/overexposure = null
+shader_parameter/rim_boost = null
+shader_parameter/flash_power = null
+shader_parameter/alpha_cutoff = null
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_778hd"]
+radius = 0.18
+
+[node name="Zombie" type="CharacterBody3D" unique_id=1913743688]
+script = ExtResource("1_oi2ws")
+attack_damage = 14.0
+max_health = 70.0
+move_speed = 4.1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1795321911]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+shape = SubResource("CapsuleShape3D_kayab")
+
+[node name="HealthComponent" type="Node" parent="." unique_id=368410723]
+script = ExtResource("2_kcjdi")
+max_health = 70.0
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=2033383700]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+material_override = SubResource("ShaderMaterial_o3lij")
+pixel_size = 0.018229166
+billboard = 1
+alpha_cut = 1
+texture_filter = 0
+texture = ExtResource("4_vurl7")
+script = ExtResource("5_u1s06")
+frame_prefix = "zombie_charger"
+
+[node name="Weakspot" type="Area3D" parent="." unique_id=1420111443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.53, 0)
+collision_layer = 8
+collision_mask = 0
+monitoring = false
+
+[node name="@CollisionShape3D@3" type="CollisionShape3D" parent="Weakspot" unique_id=1565153107]
+shape = SubResource("SphereShape3D_778hd")

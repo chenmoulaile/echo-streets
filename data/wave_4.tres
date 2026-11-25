@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WaveConfig" format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/zombie_fodder.tscn" id="1_r6yd2"]
+[ext_resource type="Script" path="res://scripts/director/wave_config.gd" id="2_r1egt"]
+[ext_resource type="PackedScene" path="res://scenes/zombie_charger.tscn" id="3_jvyrh"]
+[ext_resource type="PackedScene" path="res://scenes/zombie_bomber.tscn" id="4_88tod"]
+[ext_resource type="PackedScene" path="res://scenes/zombie_screamer.tscn" id="5_odcy7"]
+
+[resource]
+script = ExtResource("2_r1egt")
+total_count = 20
+max_alive = 28
+spawn_interval = 0.64
+prepare_time = 2.5
+fodder_scene = ExtResource("1_r6yd2")
+special_scenes = Array[PackedScene]([ExtResource("3_jvyrh"), ExtResource("4_88tod"), ExtResource("5_odcy7")])
+special_weights = Array[float]([0.45, 0.3, 0.25])
+special_ratio = 0.3
+speed_multiplier = 1.18
+health_multiplier = 1.3599999999999999

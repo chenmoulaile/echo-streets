@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bch03look01"]
+
+[ext_resource type="Script" path="res://tmp/_ch03look.gd" id="1_look"]
+
+[node name="Ch03Look" type="Node"]
+script = ExtResource("1_look")

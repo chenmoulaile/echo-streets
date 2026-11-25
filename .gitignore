@@ -1,0 +1,58 @@
+# Godot 4 —— 导入缓存与编辑器状态（体积大、可重建，绝不入库）
+.godot/
+*.translation
+
+# 导出产物：单文件 exe 约 116 MB，用 Releases 分发，不进 git 历史
+build/
+*.exe
+*.pck
+
+# 临时工作区：解包素材 / 截帧 / 调色板试验，约 1.4 GB。
+# 但里面的管线脚本必须入库 —— 素材是重跑脚本产出的，脚本才是可复现的那一半。
+tmp/*
+!tmp/*.py
+!tmp/*.cs
+!tmp/*.gd
+!tmp/*.tscn
+
+# 根目录散落的大图：都是生图母图/参考图，不是游戏资源。
+# 游戏真正读取的是 assets/ 下的成品（例如 assets/sprites/viewmodel/vm_pistol_idle.png 5884B），
+# 根目录同名的 vm_pistol_idle.png 是 610314B 的生图原图，仅作素材留档。
+# 连同它们的 .import 一起忽略：源图不入库，留着导入元数据只会让 Godot 报缺文件。
+/boss_echo.png1.png
+/boss_echo.png1.png.import
+/boss_echo.png2.png
+/boss_echo.png2.png.import
+/image (3).png
+/image (3).png.import
+/image (4).png
+/image (4).png.import
+/image (5).png
+/image (5).png.import
+/image (6).png
+/image (6).png.import
+/image (7).png
+/image (7).png.import
+/image (8).png
+/image (8).png.import
+/perk_bullet.png
+/perk_bullet.png.import
+/vm_pistol_idle.png
+/vm_pistol_idle.png.import
+/vm_shotgun_idle.png
+/vm_shotgun_idle.png.import
+/zombie_dragger.png
+/zombie_dragger.png.import
+
+# AI 生图工具的落地目录（trae_draw_image 的产出，仅供 tmp/WmProbe.py 分析）
+trae-images/
+
+# 与本项目无关的 AI 侧配置：工具自身的提示词文档，不属于游戏源码
+prompts/
+
+# 系统与编辑器垃圾
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+godot.log
