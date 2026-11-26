@@ -246,6 +246,8 @@ D:\mygame\
 
 ## 7. 验证工具链（改代码后按序跑）
 
+> **交付纪律（用户 m12650 明确要求，长期有效）**：每次向用户交付功能改动，**必须同时重新导出桌面端** `build\echo-streets.exe`，并在回复里给出路径 + 字节数 + 时间戳 + 一段「怎么测」。只改代码不导出、或只跑探针不给 exe = 未交付；旧 exe 会带着上一轮 bug 交到用户手上。导出后必须四步取证：①`Get-Item` 报字节数与 mtime（证明不是旧产物）；②启动 6 秒确认进程不早退；③在 exe 字节流里 grep 关键资源名（如 `scenes/title.tscn` / `weapon_projectile.gd` / `zombie_fodder_run_0`）证明新资源已打进内嵌 pck；④`--write-movie` 抓 2~3 帧真实画面（`PrintWindow` 抓 OpenGL 全黑，`CopyFromScreen` 会被 GUI 遮挡）。
+
 ```powershell
 # 1. 新增 class_name / 新 PNG / 外部改图后必须重导入，否则报 "Could not find type" 或截帧不变
 & $GODOT --path D:\mygame --headless --import
@@ -277,11 +279,25 @@ D:\mygame\
 # 10. 存档往返（13 项断言：字段齐全 / version=2 / 换章后 index 跟随）
 & $GODOT --path D:\mygame --headless res://tmp/save_runner.tscn
 
-# 11. 导出 Windows 桌面端（单文件内嵌 pck）
+# 11. 标题屏 → 设置面板 → 主场景切场景流（17 项断言）
+& $GODOT --path D:\mygame --headless res://tmp/title_flow_runner.tscn
+
+# 12. 弹道飞行时间（22 项断言，毫秒口径）
+& $GODOT --path D:\mygame --headless res://tmp/ballistics_runner.tscn
+
+# 13. 丧尸七态动画逐帧（run / grab 必须报 anim=run / anim=grab）
+& $GODOT --path D:\mygame --headless res://tmp/anim_runner.tscn
+
+# 14. HUD 专项 7 张截帧（命中刻线 / 换弹环 / 低血 / 空仓，必须带窗口）
+& $GODOT --path D:\mygame res://tmp/hud_shot_runner.tscn
+
+# 15. 导出 Windows 桌面端（单文件内嵌 pck）
 & $GODOT --path D:\mygame --headless --export-release "Windows Desktop" "D:/mygame/build/echo-streets.exe"
 ```
 
-**导出的两个坑**：
+**交付纪律见第 7 节开头**（每次交付必须重导 exe + 四步取证），此处不再重复。
+
+**导出的坑**：
 - 导出后**必须删掉 `%APPDATA%\Godot\app_userdata\echo-streets\logs\godot.log` 再启动**，否则读到的是上一次的日志。`logbytes=0` 才算启动零错误。
 - **验证导出版本画面不能用 `PrintWindow`**：OpenGL 内容不在 GDI 表面上，抓出来全黑。也不能用 `CopyFromScreen`（窗口会被 DSH web GUI 覆盖）。正解：`build\echo-streets.exe --write-movie "D:/mygame/tmp/movie/f.png" --fixed-fps 8 --quit-after 24`，直接拿到 24 张真实渲染帧。**注意帧号是 `f00000000` 起**，`--quit-after 20` 就只有 `f00000000..f00000019`。
 - `--write-movie` 帧文件名固定 `f%08d.png`，录制前先 `Remove-Item tmp\movie\*` 否则新旧混在一起。
@@ -311,8 +327,8 @@ D:\mygame\
 | 30s soak 帧率 | 143.7 fps（avg_dt 6.961ms，worst 150.0ms） | `tmp/soak_runner.tscn` |
 | 30s soak 战况 | wave=0 phase=3 kills=9 alive=1 shots=4264 hp=100 | 同上 |
 | 存档往返 | pass=13 fail=0 | `tmp/save_runner.tscn` |
-| 桌面端产物 | `build\echo-streets.exe` 121561672 B，启动零错误、`--write-movie` 出帧正常 | `--export-release` + 实跑 |
-| 桌面端画面 | `tmp\movie\f00000012.png` 480x270，新 viewmodel 正常 | `--write-movie` |
+| 桌面端产物 | `build\echo-streets.exe` 138720472 B（132.3MB），2026-11-26 08:52:32，sha256 前 16 位 `EBD689166F2F95F9`，启动零错误、`--write-movie` 出帧正常 | `--export-release` + 实跑 |
+| 桌面端画面 | `tmp\movie\f00000014.png` 480x270，标题屏 `ECHO STREETS` + START/SETTINGS/QUIT 三按钮 | `--write-movie` |
 | ch01 构建 | meshes 217 / bodies 147 / tris 7825 / lamps 41 / materials 15 / 679~794ms | `tmp/chapter_runner.tscn` |
 | ch02 构建 | meshes 291 / bodies 229 / tris 5538 / lamps 25 / materials 13 / 425~530ms | 同上 |
 | ch03 构建 | meshes 245 / bodies 47 / tris 7466 / lamps 41 / materials 13 / 558~680ms | 同上 |
