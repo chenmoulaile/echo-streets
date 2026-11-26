@@ -2,7 +2,9 @@
 ## class_name: Tutorial
 ## 挂载节点类型: 无（RefCounted，只提供 static 查表）
 ## 为什么单独一个文件: hud.gd 的提示通道与 tutorial_flow.gd 的推进逻辑都要读文案，
-##   写两处必然漂移。文案一律 ASCII —— Godot 内置字体不含 CJK 字形，中文会渲染成方块。
+##   写两处必然漂移。文案用英文 —— 与 HUD 的 CH / WAVE / KILLS / CALM 同一套语言，
+##   不是字体限制：实测 4.7.2 默认字体会回退系统字体，中文能正常渲染
+##   （证据 tmp/shots/title/01_settings.png 里 "求生之路（中键开镜 / 右键推挤）" 无方块）。
 ## 与操控方案联动: AIM / SHOVE 两条的按键随 GameSettings.scheme 变，写死会教错人。
 class_name Tutorial
 extends RefCounted

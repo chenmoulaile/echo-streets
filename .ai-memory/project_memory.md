@@ -378,7 +378,7 @@ D:\mygame\
 | `fragment()` 内 `return` 报错 | Godot 4 禁止在 fragment 内 return | 改条件分支或提前算好 |
 | Sprite3D 挂 canvas_item 着色器渲成灰块 | 着色器类型与节点不匹配 | 3D 用 spatial 版，贴图用 `set_shader_parameter("albedo_texture", tex)` 手动绑 |
 | 无 texture 的 TextureRect 挂着色器无效果 | 整节点不绘制 | 改用 ColorRect |
-| 中文字符不显示 | 内置字体无 CJK 字形 | HUD 文案全 ASCII |
+| 中文字符**能**正常显示 | 4.7.2 默认字体会回退到系统字体，不需要自带 TTF | 实测 `tmp/shots/title/01_settings.png` 里 `CONTROLS: 求生之路（中键开镜 / 右键推挤）` 无方块。HUD 与教程文案用英文是**风格统一**（与 CH / WAVE / KILLS 同语言），不是字体限制 |
 | AI 生图边缘洋红辉光 | 洋红键在剪影边缘造成 R、B 同高 | 降采样只算前景 + despill 削 R/B |
 | 换章后丧尸全掉到环形兜底位 | `WaveSpawner._spawn_points_root` 是 `@onready` 缓存引用，整节点换掉后悬空 | 用 `ChapterBuilder.fill_spawns(data, holder)` 复用已有 `SpawnPoints`，只换子 Marker |
 | 换章探针自己消失 / 进程挂到超时 | 探针挂在 `current_scene` 里被 `reload_current_scene()` 一起释放；启动器 `await` 的协程随场景销毁 | 探针挂 `get_tree().root` 下，收尾由探针自己 `print`+`quit`；`_ready` 里 `add_child` 到 root 会 busy，要 `call_deferred` → `await process_frame` → 同步 `add_child` |
